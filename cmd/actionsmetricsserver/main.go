@@ -48,9 +48,7 @@ var (
 )
 
 const (
-	webhookSecretTokenEnvName          = "GITHUB_WEBHOOK_SECRET_TOKEN"
-	prometheusRunBucketIntervalsName   = "PROMETHEUS_RUN_BUCKET_INTERVALS"
-	prometheusQueueBucketIntervalsName = "PROMETHEUS_QUEUE_BUCKET_INTERVALS"
+	webhookSecretTokenEnvName = "GITHUB_WEBHOOK_SECRET_TOKEN"
 )
 
 func init() {
@@ -75,10 +73,6 @@ func main() {
 		logFormat string
 
 		ghClient *github.Client
-
-		// List of histogram buckets that we want to see in metrics
-		runBucketsList   actionsmetrics.BucketsSlice
-		queueBucketsList actionsmetrics.BucketsSlice
 	)
 
 	var c github.Config
@@ -89,8 +83,6 @@ func main() {
 	}
 
 	webhookSecretTokenEnv = os.Getenv(webhookSecretTokenEnvName)
-	runBucketsList.Set(os.Getenv(prometheusRunBucketIntervalsName))
-	queueBucketsList.Set(os.Getenv(prometheusQueueBucketIntervalsName))
 
 	flag.StringVar(&webhookAddr, "webhook-addr", ":8000", "The address the metric endpoint binds to.")
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -120,8 +112,6 @@ func main() {
 		logger.Info(fmt.Sprintf("Using the value from %s for -github-webhook-secret-token", webhookSecretTokenEnvName))
 		webhookSecretToken = webhookSecretTokenEnv
 	}
-
-	actionsmetrics.InitializeMetrics(runBucketsList, queueBucketsList)
 
 	if webhookSecretToken == "" {
 		logger.Info(fmt.Sprintf("-github-webhook-secret-token and %s are missing or empty. Create one following https://docs.github.com/en/developers/webhooks-and-events/securing-your-webhooks and specify it via the flag or the envvar", webhookSecretTokenEnvName))

@@ -134,7 +134,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			log.Info("reading workflow_job logs")
 		}
 
-		githubWorkflowJobQueueHistogram.With(labels).Observe(parseResult.QueueTime.Seconds())
+		githubWorkflowJobQueueDurationSeconds.With(labels).Observe(parseResult.QueueTime.Seconds())
 
 	case "completed":
 		githubWorkflowJobsCompletedTotal.With(labels).Inc()
@@ -200,7 +200,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 		}
 
 		if runTimeSeconds != nil {
-			githubWorkflowJobRunHistogram.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Observe(*runTimeSeconds)
+			githubWorkflowJobRunDurationSeconds.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Observe(*runTimeSeconds)
 		}
 	}
 }
