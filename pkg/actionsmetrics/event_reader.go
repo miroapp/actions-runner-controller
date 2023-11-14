@@ -64,6 +64,10 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 		keysAndValues = []interface{}{"job_id", fmt.Sprint(*e.WorkflowJob.ID)}
 	)
 
+	if len(e.WorkflowJob.Labels) == 0 {
+		return
+	}
+
 	runsOn := strings.Join(e.WorkflowJob.Labels, `,`)
 	labels["runs_on"] = runsOn
 
