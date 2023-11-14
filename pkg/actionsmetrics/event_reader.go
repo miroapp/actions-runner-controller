@@ -193,8 +193,10 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			).Inc()
 		}
 
-		if runTimeSeconds != nil {
-			githubWorkflowJobRunDurationSeconds.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Observe(*runTimeSeconds)
+		if *e.WorkflowJob.Conclusion != "cancelled" && *e.WorkflowJob.Conclusion != "skipped" && *e.WorkflowJob.Conclusion != "timed_out" {
+			if runTimeSeconds != nil {
+				githubWorkflowJobRunDurationSeconds.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Observe(*runTimeSeconds)
+			}
 		}
 	}
 }
