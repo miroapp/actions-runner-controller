@@ -137,7 +137,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 		githubWorkflowJobQueueDurationSeconds.With(labels).Observe(parseResult.QueueTime.Seconds())
 
 	case "completed":
-		githubWorkflowJobsCompletedTotal.With(labels).Inc()
+		githubWorkflowJobsCompletedTotal.With(extraLabel("runner_name", *e.WorkflowJob.RunnerName, labels)).Inc()
 
 		// job_conclusion -> (neutral, success, skipped, cancelled, timed_out, action_required, failure)
 		githubWorkflowJobConclusionsTotal.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Inc()
