@@ -175,7 +175,7 @@ var (
 			Name: "github_workflow_jobs_completed_total",
 			Help: "Total count of workflow jobs completed (events where job_status=completed)",
 		},
-		metricLabels(),
+		metricLabels("runner_name"),
 	)
 	githubWorkflowJobFailuresTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
