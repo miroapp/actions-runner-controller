@@ -146,7 +146,7 @@ func initGithubWorkflowJobRunDurationSeconds(buckets []float64) *prometheus.Hist
 }
 
 var (
-	commonLabels                          = []string{"runs_on", "job_name", "organization", "repository", "repository_full_name", "owner", "workflow_name", "head_branch"}
+	commonLabels                          = []string{"runs_on", "job_name", "organization", "repository", "owner", "workflow_name"}
 	githubWorkflowJobQueueDurationSeconds *prometheus.HistogramVec
 	githubWorkflowJobRunDurationSeconds   *prometheus.HistogramVec
 	githubWorkflowJobConclusionsTotal     = prometheus.NewCounterVec(

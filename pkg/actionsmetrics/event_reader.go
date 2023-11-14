@@ -75,10 +75,6 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			labels["repository"] = *n
 			keysAndValues = append(keysAndValues, "repository", *n)
 		}
-		if n := e.Repo.FullName; n != nil {
-			labels["repository_full_name"] = *n
-			keysAndValues = append(keysAndValues, "repository_full_name", *n)
-		}
 
 		if e.Repo.Owner != nil {
 			if l := e.Repo.Owner.Login; l != nil {
@@ -98,19 +94,13 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 	labels["organization"] = org
 
 	var wn string
-	var hb string
 	if e.WorkflowJob != nil {
 		if n := e.WorkflowJob.WorkflowName; n != nil {
 			wn = *n
 			keysAndValues = append(keysAndValues, "workflow_name", *n)
 		}
-		if n := e.WorkflowJob.HeadBranch; n != nil {
-			hb = *n
-			keysAndValues = append(keysAndValues, "head_branch", *n)
-		}
 	}
 	labels["workflow_name"] = wn
-	labels["head_branch"] = hb
 
 	log := reader.Log.WithValues(keysAndValues...)
 
