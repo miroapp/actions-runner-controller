@@ -64,6 +64,10 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 		keysAndValues = []interface{}{"job_id", fmt.Sprint(*e.WorkflowJob.ID)}
 	)
 
+	if len(e.WorkflowJob.Labels) == 0 {
+		return
+	}
+
 	runsOn := strings.Join(e.WorkflowJob.Labels, `,`)
 	labels["runs_on"] = runsOn
 
@@ -74,10 +78,6 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 		if n := e.Repo.Name; n != nil {
 			labels["repository"] = *n
 			keysAndValues = append(keysAndValues, "repository", *n)
-		}
-		if n := e.Repo.FullName; n != nil {
-			labels["repository_full_name"] = *n
-			keysAndValues = append(keysAndValues, "repository_full_name", *n)
 		}
 
 		if e.Repo.Owner != nil {
@@ -98,19 +98,13 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 	labels["organization"] = org
 
 	var wn string
-	var hb string
 	if e.WorkflowJob != nil {
 		if n := e.WorkflowJob.WorkflowName; n != nil {
 			wn = *n
 			keysAndValues = append(keysAndValues, "workflow_name", *n)
 		}
-		if n := e.WorkflowJob.HeadBranch; n != nil {
-			hb = *n
-			keysAndValues = append(keysAndValues, "head_branch", *n)
-		}
 	}
 	labels["workflow_name"] = wn
-	labels["head_branch"] = hb
 
 	log := reader.Log.WithValues(keysAndValues...)
 
@@ -203,8 +197,10 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			).Inc()
 		}
 
-		if runTimeSeconds != nil {
-			githubWorkflowJobRunDurationSeconds.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Observe(*runTimeSeconds)
+		if *e.WorkflowJob.Conclusion != "cancelled" && *e.WorkflowJob.Conclusion != "skipped" && *e.WorkflowJob.Conclusion != "timed_out" {
+			if runTimeSeconds != nil {
+				githubWorkflowJobRunDurationSeconds.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Observe(*runTimeSeconds)
+			}
 		}
 	}
 }
