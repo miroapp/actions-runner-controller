@@ -273,9 +273,11 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 				continue
 			}
 
-			if strings.HasPrefix(line, "Job is about to start running on the runner:") {
-				startedTime, _ = time.Parse(time.RFC3339, timestamp)
-				continue
+			if strings.HasPrefix(line, "Job is about to start running on the runner:") || strings.HasPrefix(line, "Current runner version:") {
+				if startedTime.UTC().IsZero() {
+					startedTime, _ = time.Parse(time.RFC3339, timestamp)
+					continue
+				}
 			}
 
 			// Last line in the log will count as the completed time
