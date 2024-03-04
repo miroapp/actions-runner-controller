@@ -241,7 +241,7 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 
 	var (
 		queuedTime    time.Time
-		startedTime   time.Time
+		startedTime   *time.Time
 		completedTime time.Time
 	)
 
@@ -274,8 +274,12 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 			}
 
 			if strings.HasPrefix(line, "Job is about to start running on the runner:") || strings.HasPrefix(line, "Current runner version:") {
-				if startedTime.UTC().IsZero() {
-					startedTime, _ = time.Parse(time.RFC3339, timestamp)
+				if startedTime != nil {
+					st, err := time.Parse(time.RFC3339, timestamp)
+					if err != nil {
+						return
+					}
+					startedTime = &st
 					continue
 				}
 			}
@@ -288,6 +292,6 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 	return &ParseResult{
 		ExitCode:  exitCode,
 		QueueTime: startedTime.Sub(queuedTime),
-		RunTime:   completedTime.Sub(startedTime),
+		RunTime:   completedTime.Sub(*startedTime),
 	}, nil
 }
