@@ -274,11 +274,8 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 			}
 
 			if strings.HasPrefix(line, "Job is about to start running on the runner:") || strings.HasPrefix(line, "Current runner version:") {
-				if startedTime != nil {
-					st, err := time.Parse(time.RFC3339, timestamp)
-					if err != nil {
-						return
-					}
+				if startedTime == nil {
+					st, _ := time.Parse(time.RFC3339, timestamp)
 					startedTime = &st
 					continue
 				}
