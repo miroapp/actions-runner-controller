@@ -288,7 +288,7 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 	if startedTime == nil {
 		return &ParseResult{
 			ExitCode:  exitCode,
-			QueueTime: startedTime.Sub(queuedTime),
+			QueueTime: time.Duration(0),
 			RunTime:   time.Duration(0),
 		}, nil
 
