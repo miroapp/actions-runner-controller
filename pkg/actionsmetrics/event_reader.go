@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -232,7 +233,7 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 	if err != nil {
 		return nil, err
 	}
-	jobLogs, err := http.DefaultClient.Get(url.String())
+	jobLogs, err := getWithRetry(url.String(), 3, time.Duration(3)*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -289,4 +290,27 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 		QueueTime: startedTime.Sub(queuedTime),
 		RunTime:   completedTime.Sub(startedTime),
 	}, nil
+}
+
+func getWithRetry(url string, maxRetries int, retryDelay time.Duration) (*http.Response, error) {
+	for i := 0; i < maxRetries; i++ {
+		resp, err := http.DefaultClient.Get(url)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(bodyBytes) != 0 {
+			return resp, nil
+		}
+
+		time.Sleep(retryDelay)
+	}
+
+	return nil, fmt.Errorf("empty response after max retries %d", maxRetries)
 }
