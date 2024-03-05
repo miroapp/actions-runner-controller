@@ -238,8 +238,6 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 		return nil, err
 	}
 
-	println("jobLogs.Body", jobLogs.Body)
-
 	exitCode := "null"
 
 	var (
@@ -305,6 +303,8 @@ func getWithRetry(url string, maxRetries int, retryDelay time.Duration) (*http.R
 		if err != nil {
 			return nil, err
 		}
+
+		println("bodyBytes", string(bodyBytes))
 
 		if len(bodyBytes) != 0 {
 			return resp, nil
