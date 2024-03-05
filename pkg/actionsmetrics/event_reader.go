@@ -160,7 +160,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			s := parseResult.RunTime.Seconds()
 			runTimeSeconds = &s
 
-			log.WithValues(keysAndValues...).Info("reading workflow_job logs", "exit_code", exitCode)
+			log.Info("reading workflow_job logs", "exit_code", exitCode, "run_time_seconds", &runTimeSeconds, "parseResult", &parseResult)
 		}
 
 		if *e.WorkflowJob.Conclusion == "failure" {
@@ -273,7 +273,7 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 				continue
 			}
 
-			if strings.HasPrefix(line, "Job is about to start running on the runner:") || strings.HasPrefix(line, "Current runner version:") {
+			if strings.HasPrefix(strings.ToLower(line), strings.ToLower("Job is about to start running on the runner:")) || strings.HasPrefix(strings.ToLower(line), strings.ToLower("Current runner version:")) {
 				startedTime, _ = time.Parse(time.RFC3339, timestamp)
 				continue
 			}
