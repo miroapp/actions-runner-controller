@@ -237,7 +237,8 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 	if err != nil {
 		return nil, err
 	}
-	println(url.String())
+
+	println("jobLogs.Body", jobLogs.Body)
 
 	exitCode := "null"
 
