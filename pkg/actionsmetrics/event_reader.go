@@ -109,7 +109,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 	log := reader.Log.WithValues(keysAndValues...)
 
 	// switch on job status
-	switch action := e.GetAction(); action {
+	switch action := *e.WorkflowJob.Status; strings.ToLower(action) {
 	case "queued":
 		githubWorkflowJobsQueuedTotal.With(labels).Inc()
 
@@ -125,7 +125,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			log.Error(err, "reading workflow job log")
 			return
 		} else {
-			log.Info("reading workflow_job logs")
+			log.Info("reading workflow_job logs for in progress job", "workflow_job_status", *e.WorkflowJob.Status, "parseResult", &parseResult)
 		}
 
 		githubWorkflowJobQueueDurationSeconds.With(labels).Observe(parseResult.QueueTime.Seconds())
@@ -160,7 +160,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			s := parseResult.RunTime.Seconds()
 			runTimeSeconds = &s
 
-			log.Info("reading workflow_job logs", "exit_code", exitCode, "run_time_seconds", &runTimeSeconds, "parseResult", &parseResult)
+			log.Info("reading workflow_job logs for completed job", "exit_code", exitCode, "run_time_seconds", &runTimeSeconds, "parseResult", &parseResult)
 		}
 
 		if *e.WorkflowJob.Conclusion == "failure" {
@@ -231,6 +231,15 @@ func (reader *EventReader) fetchAndParseWorkflowJobLogs(ctx context.Context, e *
 	url, _, err := reader.GitHubClient.Actions.GetWorkflowJobLogs(ctx, owner, repo, id, true)
 	if err != nil {
 		return nil, err
+	}
+	if *e.WorkflowJob.Status == "in_progress" {
+		if strings.Contains(url.String(), "actions-results") {
+			return &ParseResult{
+				ExitCode:  "",
+				QueueTime: time.Duration(0),
+				RunTime:   time.Duration(0),
+			}, nil
+		}
 	}
 	jobLogs, err := http.DefaultClient.Get(url.String())
 	if err != nil {
