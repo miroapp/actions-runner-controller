@@ -106,6 +106,14 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 	}
 	labels["workflow_name"] = wn
 
+	is_main_branch := "false"
+
+	if strings.EqualFold(*e.WorkflowJob.HeadBranch, "main") || strings.EqualFold(*e.WorkflowJob.HeadBranch, "master") {
+		is_main_branch = "true"
+	}
+
+	labels["is_main_branch"] = is_main_branch
+
 	log := reader.Log.WithValues(keysAndValues...)
 
 	// switch on job status
