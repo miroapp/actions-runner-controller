@@ -213,30 +213,28 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 			}
 		}
 
-		trackedRepositories := map[string]bool{
-			"client":     true,
-			"client-dev": true,
-		}
-
-		if _, ok := trackedRepositories[repoName]; ok {
-			for _, step := range e.WorkflowJob.Steps {
-				if step.StartedAt == nil || step.CompletedAt == nil || step.Conclusion == nil || step.Name == nil || step.Status == nil || step.Number == nil {
-					continue // Skip steps with incomplete data
-				}
-
-				stepLabels := extraLabel("step_name", *step.Name, labels)
-				stepLabels["step_number"] = fmt.Sprint(step.Number)
-				stepLabels["step_conclusion"] = *step.Conclusion
-				stepLabels["step_status"] = *step.Status
-
-				stepDuration := step.CompletedAt.Sub(step.StartedAt.Time)
-
-				githubWorkflowJobStepDurationSeconds.With(stepLabels).Observe(stepDuration.Seconds())
-
-				log.Info("processed step", "step_name", *step.Name, "step_conclusion", *step.Conclusion, "step_duration_seconds", stepDuration.Seconds())
+		if *e.WorkflowJob.Conclusion == "success" {
+			trackedRepositories := map[string]bool{
+				"client":     true,
+				"client-dev": true,
 			}
-		} else {
-			log.Info("skipping the step reporting for the repo", "repo_name", repoName)
+
+			if _, ok := trackedRepositories[repoName]; ok {
+				for _, step := range e.WorkflowJob.Steps {
+					stepLabels := extraLabel("step_name", *step.Name, labels)
+					stepLabels["step_number"] = fmt.Sprint(step.Number)
+					stepLabels["step_conclusion"] = *step.Conclusion
+					stepLabels["step_status"] = *step.Status
+
+					stepDuration := step.CompletedAt.Sub(step.StartedAt.Time)
+
+					githubWorkflowJobStepDurationSeconds.With(stepLabels).Observe(stepDuration.Seconds())
+
+					log.Info("processed step", "step_name", *step.Name, "step_conclusion", *step.Conclusion, "step_duration_seconds", stepDuration.Seconds())
+				}
+			} else {
+				log.Info("skipping the step reporting for the repo", "repo_name", repoName)
+			}
 		}
 	}
 }
