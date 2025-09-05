@@ -74,8 +74,10 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 	labels["job_name"] = *e.WorkflowJob.Name
 	keysAndValues = append(keysAndValues, "job_name", *e.WorkflowJob.Name)
 
+	var repoName = ""
 	if e.Repo != nil {
 		if n := e.Repo.Name; n != nil {
+			repoName = *n
 			labels["repository"] = *n
 			keysAndValues = append(keysAndValues, "repository", *n)
 		}
@@ -208,6 +210,21 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 		if *e.WorkflowJob.Conclusion != "cancelled" && *e.WorkflowJob.Conclusion != "skipped" && *e.WorkflowJob.Conclusion != "timed_out" {
 			if runTimeSeconds != nil {
 				githubWorkflowJobRunDurationSeconds.With(extraLabel("job_conclusion", *e.WorkflowJob.Conclusion, labels)).Observe(*runTimeSeconds)
+			}
+		}
+
+		if *e.WorkflowJob.Conclusion == "success" && repoName == "client" {
+			for _, step := range e.WorkflowJob.Steps {
+				stepLabels := extraLabel("step_name", *step.Name, labels)
+				stepLabels["step_number"] = fmt.Sprint(step.Number)
+				stepLabels["step_conclusion"] = *step.Conclusion
+				stepLabels["step_status"] = *step.Status
+
+				stepDuration := step.CompletedAt.Sub(step.StartedAt.Time)
+
+				githubWorkflowJobStepDurationSeconds.With(stepLabels).Observe(stepDuration.Seconds())
+
+				log.Info("processed step in the repository", "repo", repoName, "step_name", *step.Name, "step_conclusion", *step.Conclusion)
 			}
 		}
 	}
