@@ -216,9 +216,7 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 		if *e.WorkflowJob.Conclusion == "success" && repoName == "client" {
 			for _, step := range e.WorkflowJob.Steps {
 				stepLabels := extraLabel("step_name", *step.Name, labels)
-				stepLabels["step_number"] = fmt.Sprint(step.Number)
 				stepLabels["step_conclusion"] = *step.Conclusion
-				stepLabels["step_status"] = *step.Status
 
 				stepDuration := step.CompletedAt.Sub(step.StartedAt.Time)
 
