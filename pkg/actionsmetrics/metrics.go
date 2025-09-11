@@ -154,7 +154,7 @@ func initGithubWorkflowJobStepDurationSeconds(buckets []float64) *prometheus.His
 			Help:    "Run times for the steps in workflow jobs in seconds",
 			Buckets: buckets,
 		},
-		metricLabels("step_name", "step_number", "step_conclusion", "step_status"),
+		metricLabels("step_name", "step_conclusion"),
 	)
 }
 
