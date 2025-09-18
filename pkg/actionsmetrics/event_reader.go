@@ -215,14 +215,19 @@ func (reader *EventReader) ProcessWorkflowJobEvent(ctx context.Context, event in
 
 		if *e.WorkflowJob.Conclusion == "success" && repoName == "client" {
 			for _, step := range e.WorkflowJob.Steps {
+				conclusion := step.Conclusion
+				if conclusion == nil {
+					continue
+				}
+
 				stepLabels := extraLabel("step_name", *step.Name, labels)
-				stepLabels["step_conclusion"] = *step.Conclusion
+				stepLabels["step_conclusion"] = *conclusion
 
 				stepDuration := step.CompletedAt.Sub(step.StartedAt.Time)
 
 				githubWorkflowJobStepDurationSeconds.With(stepLabels).Observe(stepDuration.Seconds())
 
-				log.Info("processed step in the repository", "repo", repoName, "step_name", *step.Name, "step_conclusion", *step.Conclusion)
+				log.Info("processed step in the repository", "repo", repoName, "step_name", *step.Name, "step_conclusion", *conclusion)
 			}
 		}
 	}
